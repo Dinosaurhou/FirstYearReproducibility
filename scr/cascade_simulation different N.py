@@ -90,7 +90,7 @@ def simulate_cascade(G_A, G_B, initial_attack_fraction):
 
 if __name__ == '__main__':
     # --- 网络参数 ---
-    N_values = [1000, 2000, 4000, 8000] # 不同的节点数
+    N_values = [1000, 2000, 4000, 8000, 16000, 32000, 64000] # 不同的节点数
     AVG_DEGREE = 4  # 平均度保持不变
 
     # --- 模拟参数 ---
@@ -109,8 +109,8 @@ if __name__ == '__main__':
 
         # --- 生成两个ER网络 ---
         # 使用不同的种子以创建不同的网络拓扑
-        G_A = nx.erdos_renyi_graph(N, P, seed=42)
-        G_B = nx.erdos_renyi_graph(N, P, seed=43)
+        G_A = nx.erdos_renyi_graph(N, P, seed=None)
+        G_B = nx.erdos_renyi_graph(N, P, seed=None)
 
         final_sizes = []
         for p_attack in attack_fractions:
