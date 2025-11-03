@@ -11,18 +11,41 @@ GAMMAS = [3.0, 2.7, 2.3]
 # 生成SF网络的函数
 
 def create_sf_graph(n, gamma, k_avg):
+    attempts = 0
     while True:
+        attempts += 1
         degrees = nx.utils.powerlaw_sequence(n, gamma)
-        degrees = [int(d) for d in degrees]
+        degrees = [max(1, int(d)) for d in degrees] # 确保最小度为1
+        
+        # 调整度序列以匹配平均度
+        current_sum = sum(degrees)
+        target_sum = n * k_avg
+        if current_sum > 0:
+            scale = target_sum / current_sum
+            degrees = [max(1, int(d * scale)) for d in degrees]
+
         if sum(degrees) % 2 != 0:
             idx = np.random.randint(0, n)
             degrees[idx] += 1
+        
+        # 检查平均度是否在可接受范围内
         current_k_avg = sum(degrees) / n
-        if k_avg - 0.5 < current_k_avg < k_avg + 0.5:
+        if abs(current_k_avg - k_avg) < 0.5 or attempts > 200:
             break
+
     G = nx.configuration_model(degrees)
     G = nx.Graph(G)
     G.remove_edges_from(nx.selfloop_edges(G))
+    
+    # 打印网络信息
+    actual_avg_degree = 2 * G.number_of_edges() / G.number_of_nodes()
+    print(f"--- SF网络 (γ={gamma}) 生成信息 ---")
+    print(f"  节点数: {G.number_of_nodes()}")
+    print(f"  边数: {G.number_of_edges()}")
+    print(f"  实际平均度: {actual_avg_degree:.4f}")
+    print(f"  目标平均度: {k_avg}")
+    print("---------------------------------")
+    
     return G
 
 fig = plt.figure(figsize=(18, 6))
@@ -30,6 +53,13 @@ for i, gamma in enumerate(GAMMAS):
     if gamma == 3.0:
         m = int(AVG_DEGREE / 2)
         G = nx.barabasi_albert_graph(N, m)
+        # 打印BA网络信息
+        actual_avg_degree = 2 * G.number_of_edges() / G.number_of_nodes()
+        print(f"--- BA网络 (γ≈3.0) 生成信息 ---")
+        print(f"  节点数: {G.number_of_nodes()}")
+        print(f"  边数: {G.number_of_edges()}")
+        print(f"  实际平均度: {actual_avg_degree:.4f}")
+        print("---------------------------------")
     else:
         G = create_sf_graph(N, gamma, AVG_DEGREE)
     # spring布局，3D坐标

@@ -47,10 +47,11 @@ def simulate_cascade(G_A, G_B, initial_attack_fraction):
     while True:
         # --- a. 网络内部失效 (A) ---
         # 节点必须属于最大连通分量才能发挥功能
-        giant_A = get_giant_component(net_A)
-        nodes_to_remove_A = set(net_A.nodes()) - set(giant_A.nodes())
-        if nodes_to_remove_A:
-            net_A.remove_nodes_from(nodes_to_remove_A)
+        if len(net_A.nodes()) > 0:
+            giant_A = get_giant_component(net_A)
+            nodes_to_remove_A = set(net_A.nodes()) - set(giant_A.nodes())
+            if nodes_to_remove_A:
+                net_A.remove_nodes_from(nodes_to_remove_A)
 
         # --- b. 跨网络依赖失效 (A -> B) ---
         # A中失效的节点会导致B中对应的依赖节点失效
@@ -60,10 +61,11 @@ def simulate_cascade(G_A, G_B, initial_attack_fraction):
             net_B.remove_nodes_from(nodes_to_remove_B)
 
         # --- c. 网络内部失效 (B) ---
-        giant_B = get_giant_component(net_B)
-        nodes_to_remove_B = set(net_B.nodes()) - set(giant_B.nodes())
-        if nodes_to_remove_B:
-            net_B.remove_nodes_from(nodes_to_remove_B)
+        if len(net_B.nodes()) > 0:
+            giant_B = get_giant_component(net_B)
+            nodes_to_remove_B = set(net_B.nodes()) - set(giant_B.nodes())
+            if nodes_to_remove_B:
+                net_B.remove_nodes_from(nodes_to_remove_B)
 
         # --- d. 跨网络依赖失效 (B -> A) ---
         failed_nodes_in_B = set(G_B.nodes()) - set(net_B.nodes())
@@ -90,11 +92,13 @@ def simulate_cascade(G_A, G_B, initial_attack_fraction):
 
 if __name__ == '__main__':
     # --- 网络参数 ---
-    N_values = [1000, 2000, 4000, 8000, 16000, 32000, 64000] # 不同的节点数
+    # N_values = [1000, 2000, 4000, 8000, 16000, 32000, 64000] # 不同的节点数
+    N_values = [1000, 2000, 4000, 8000]
     AVG_DEGREE = 4  # 平均度保持不变
 
     # --- 模拟参数 ---
     attack_fractions = np.linspace(0, 1, 51) # 从 0% 到 100% 的攻击强度, 增加采样点使曲线更平滑
+    retained_fractions = 1 - attack_fractions # 初始保留的节点比例 p
     num_runs = 5 # 为了结果的稳定性，对每个攻击强度进行多次模拟并取平均值
 
     # --- 准备绘图 ---
@@ -127,12 +131,13 @@ if __name__ == '__main__':
         # 我们可以通过计算相邻点之间的差值来找到它
         diffs = np.diff(final_sizes)
         critical_index = np.argmin(diffs)
-        p_c = attack_fractions[critical_index]
-        critical_ps.append(p_c)
-        print(f"  N={N} 的临界点 p_c ≈ {p_c:.3f}")
+        # 临界点对应的是攻击比例，我们需要转换为保留比例
+        p_c_retained = retained_fractions[critical_index]
+        critical_ps.append(p_c_retained)
+        print(f"  N={N} 的临界点 p_c ≈ {p_c_retained:.3f}")
 
         # --- 在图表中绘制当前N值的结果 ---
-        plt.plot(attack_fractions, final_sizes, 'o-', label=f'N = {N}')
+        plt.plot(retained_fractions, final_sizes, 'o-', label=f'N = {N}')
 
     # --- 计算并标记平均临界点 ---
     avg_pc = np.mean(critical_ps)
@@ -142,9 +147,11 @@ if __name__ == '__main__':
     plt.axvline(x=avg_pc, color='r', linestyle='--', label=f'平均临界点 $p_c \\approx {avg_pc:.3f}$')
     
     # --- 结果可视化 ---
-    plt.xlabel('初始攻击移除的节点比例 (1-p)')
+    plt.xlabel('初始保留节点比例 (p)')
     plt.ylabel('最终相互连接的巨型分量大小 (P∞)')
     plt.title(f'不同规模相互依赖网络的级联失效 (平均度 <k> = {AVG_DEGREE})')
     plt.grid(True)
     plt.legend()
+    # 反转x轴，使其从0到1递增
+    # plt.xlim(1, 0)
     plt.show()
