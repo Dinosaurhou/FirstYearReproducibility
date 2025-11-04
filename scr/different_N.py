@@ -91,6 +91,8 @@ def simulate_cascade(G_A, G_B, initial_attack_fraction):
 
 
 if __name__ == '__main__':
+
+    print("dsajkdhkashdkjashdkjashd")
     # --- 网络参数 ---
     # N_values = [1000, 2000, 4000, 8000, 16000, 32000, 64000] # 不同的节点数
     N_values = [1000, 2000, 4000, 8000]

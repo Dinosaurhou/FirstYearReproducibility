@@ -2,6 +2,8 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
+print("Hello, World!")
+
 def get_giant_component(G):
     """返回图G的最大连通分量"""
     if not G.nodes():
@@ -89,6 +91,8 @@ def simulate_cascade(G_A, G_B, initial_attack_fraction):
 
 
 if __name__ == '__main__':
+
+    
     # --- 网络参数 ---
     N = 50000  # 节点数
     AVG_DEGREE = 4  # 平均度

@@ -1,6 +1,6 @@
 {
   "code-runner.executorMap": {
-    "python": "set PYTHONIOENCODING=utf8 && python"
+    "python": "set PYTHONIOENCODING=utf8 && python -u"
   },
   "[jsonc]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
