@@ -6,6 +6,8 @@ import numpy as np
 
 rcParams['axes.unicode_minus'] = False  # 正常显示负号
 
+
+# 会返回级联失效之后网络A中最大连通分量的节点比例
 def cascade_failure(G1, G2, dependency_map, initial_removal_fraction):
     '''
     模拟相互依赖网络的级联失效过程
@@ -22,9 +24,11 @@ def cascade_failure(G1, G2, dependency_map, initial_removal_fraction):
     n = G1.number_of_nodes()
 
     # TODO: 要注意如果攻击节点比例直接是1的话，整个网络都会被移除，就直接可以返回了
-
-    # 步骤1: 初始随机攻击网络A
     num_to_remove = int(n * initial_removal_fraction)
+    if num_to_remove >= n:
+        return 0.0
+    
+    # 步骤1: 初始随机攻击网络A
     nodes_to_remove = np.random.choice(G1.nodes(), size=num_to_remove, replace=False)
     # 移除网络A中的节点
     G1.remove_nodes_from(nodes_to_remove)
@@ -34,8 +38,6 @@ def cascade_failure(G1, G2, dependency_map, initial_removal_fraction):
         if node in dependency_map:
             dependent_nodes = dependency_map[node]
             G2.remove_node(dependent_nodes)
-
-
 
 
     # XXX # 初步处理：给网络A分簇群
@@ -51,12 +53,15 @@ def cascade_failure(G1, G2, dependency_map, initial_removal_fraction):
     #         node_to_component[node] = component_id
 
     
-    # 去记录两个网络有没有边被移除
-    flag1 = False
-    flag2 = False
+    # 去记录两个网络有没有边被移除，F是这次没有移除边，T是有边被移除
+    flag1 = True
+    flag2 = True
     # 级联失效过程
+    # 都没有边被移除就停止，也就是F && F 退出
     while flag1 or flag2:
 
+        # 应该在for循环之后判断这次有没有边被移除，否则flag2会被覆盖掉
+        flag2 = False
         # 遍历网络B中的每条边找出边连接的两个节点，
         # 通过这两个节点找出对应的网络A中的两个节点，
         # 判断这两个节点是否在同一个连通分量中
@@ -81,6 +86,8 @@ def cascade_failure(G1, G2, dependency_map, initial_removal_fraction):
                     G2.remove_edge(node_b1, node_b2)
                     flag2 = True
         
+
+        flag1 = False
         # 同样的操作，遍历网络A中的每条边
         for edge in G1.edges():
             node_a1, node_a2 = edge
@@ -97,23 +104,23 @@ def cascade_failure(G1, G2, dependency_map, initial_removal_fraction):
                     G1.remove_edge(node_a1, node_a2)
                     flag1 = True
 
-        
+        # print(f"网络A剩余的边数：{G1.number_of_edges()}，网络B剩余的边数：{G2.number_of_edges()}")
+        # print(flag1, flag2)
 
+    # 获取网络A中的最大连通分量
+    largest_cc_A = max(nx.connected_components(G1), key=len)
+    # 求出网络A中最大连通分量的节点比例
+    final_gaint_fraction_A = len(largest_cc_A) / n
+    print(f"级联失效后网络A中最大连通分量大小: {len(largest_cc_A):.4f}")
 
-
-
-
-
-
-
-
+    return final_gaint_fraction_A
 
 
 if __name__ == "__main__":
     # 生成ER网络
     # N = 100 节点数
     # 平均度 = 4，对于ER网络，p = <k>/(N-1)
-    N = 100
+    N = 2000
     average_degree = 4
     p = average_degree / (N - 1)
 
@@ -138,62 +145,116 @@ if __name__ == "__main__":
     node_mapping = {i: i for i in range(N)}
     print(f"\n节点对应关系: {list(node_mapping.items())[:5]}...")  # 显示前5个
 
-    cascade_failure(G_A, G_B, node_mapping, initial_removal_fraction=0.1)
 
-    # 3D可视化
-    fig = plt.figure(figsize=(16, 12))
-    ax = fig.add_subplot(111, projection='3d')
+    # 进行多次实验，改变初始攻击比例
+    initial_removal_fractions = np.linspace(0.35, 0.45, 11)  # 从0.35到0.45，取11个点
+    final_gaint_fractions = []
+    num_experiments = 30  # 每个初始攻击比例重复30次
 
-    # 为两个网络生成2D布局
-    pos_A = nx.spring_layout(G_A, seed=42)
-    pos_B = nx.spring_layout(G_B, seed=123)
+    for initial_removal_fraction in initial_removal_fractions:
+        print(f"\n{'='*50}")
+        print(f"初始攻击比例: {initial_removal_fraction:.4f}")
+        print(f"{'='*50}")
+        
+        # 对每个初始攻击比例进行30次实验
+        fractions_for_current_attack = []
+        for exp_num in range(num_experiments):
+            final_gaint_fraction = cascade_failure(G_A, G_B, node_mapping, initial_removal_fraction)
+            fractions_for_current_attack.append(final_gaint_fraction)
+            print(f"实验 {exp_num + 1}/{num_experiments}: {final_gaint_fraction:.4f}")
+        
+        # 计算30次实验的平均值
+        avg_fraction = np.mean(fractions_for_current_attack)
+        final_gaint_fractions.append(fractions_for_current_attack)
+        
+        print(f"平均最大连通分量比例：{avg_fraction:.4f}")
 
-    # 将2D位置转换为3D坐标
-    # 网络A在z=0平面
-    pos_A_3d = {node: (pos[0], pos[1], 0) for node, pos in pos_A.items()}
-    # 网络B在z=1平面
-    pos_B_3d = {node: (pos[0], pos[1], 1) for node, pos in pos_B.items()}
+    # 输出结果汇总
+    print(f"\n{'='*50}")
+    print("实验结果汇总:")
+    print(f"{'='*50}")
+    for frac, results in zip(initial_removal_fractions, final_gaint_fractions):
+        avg = np.mean(results)
+        std = np.std(results)
+        print(f"初始攻击比例: {frac:.4f} -> 平均: {avg:.4f} ± {std:.4f}")
 
-    # 绘制网络A的边
-    for edge in G_A.edges():
-        x = [pos_A_3d[edge[0]][0], pos_A_3d[edge[1]][0]]
-        y = [pos_A_3d[edge[0]][1], pos_A_3d[edge[1]][1]]
-        z = [pos_A_3d[edge[0]][2], pos_A_3d[edge[1]][2]]
-        ax.plot(x, y, z, c='blue', alpha=0.3, linewidth=0.5)
 
-    # 绘制网络B的边
-    for edge in G_B.edges():
-        x = [pos_B_3d[edge[0]][0], pos_B_3d[edge[1]][0]]
-        y = [pos_B_3d[edge[0]][1], pos_B_3d[edge[1]][1]]
-        z = [pos_B_3d[edge[0]][2], pos_B_3d[edge[1]][2]]
-        ax.plot(x, y, z, c='red', alpha=0.3, linewidth=0.5)
 
-    # 绘制对应关系的虚线
-    for node_a, node_b in node_mapping.items():
-        x = [pos_A_3d[node_a][0], pos_B_3d[node_b][0]]
-        y = [pos_A_3d[node_a][1], pos_B_3d[node_b][1]]
-        z = [pos_A_3d[node_a][2], pos_B_3d[node_b][2]]
-        ax.plot(x, y, z, 'k--', alpha=0.1, linewidth=0.5)
 
-    # 绘制网络A的节点
-    nodes_A = np.array([pos_A_3d[node] for node in G_A.nodes()])
-    ax.scatter(nodes_A[:, 0], nodes_A[:, 1], nodes_A[:, 2], 
-            c='lightblue', s=100, alpha=0.8, edgecolors='blue', label='网络A')
 
-    # 绘制网络B的节点
-    nodes_B = np.array([pos_B_3d[node] for node in G_B.nodes()])
-    ax.scatter(nodes_B[:, 0], nodes_B[:, 1], nodes_B[:, 2], 
-            c='lightcoral', s=100, alpha=0.8, edgecolors='red', label='网络B')
 
-    # 设置标签和标题
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z (网络层)')
-    ax.set_title(f'双层网络3D可视化\n网络A (蓝色, z=0) 和 网络B (红色, z=1)\n虚线表示节点对应关系', fontsize=14)
-    ax.legend()
 
-    # 设置视角
-    ax.view_init(elev=20, azim=45)
 
-    plt.tight_layout()
-    plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # # 3D可视化
+    # fig = plt.figure(figsize=(16, 12))
+    # ax = fig.add_subplot(111, projection='3d')
+
+    # # 为两个网络生成2D布局
+    # pos_A = nx.spring_layout(G_A, seed=42)
+    # pos_B = nx.spring_layout(G_B, seed=123)
+
+    # # 将2D位置转换为3D坐标
+    # # 网络A在z=0平面
+    # pos_A_3d = {node: (pos[0], pos[1], 0) for node, pos in pos_A.items()}
+    # # 网络B在z=1平面
+    # pos_B_3d = {node: (pos[0], pos[1], 1) for node, pos in pos_B.items()}
+
+    # # 绘制网络A的边
+    # for edge in G_A.edges():
+    #     x = [pos_A_3d[edge[0]][0], pos_A_3d[edge[1]][0]]
+    #     y = [pos_A_3d[edge[0]][1], pos_A_3d[edge[1]][1]]
+    #     z = [pos_A_3d[edge[0]][2], pos_A_3d[edge[1]][2]]
+    #     ax.plot(x, y, z, c='blue', alpha=0.3, linewidth=0.5)
+
+    # # 绘制网络B的边
+    # for edge in G_B.edges():
+    #     x = [pos_B_3d[edge[0]][0], pos_B_3d[edge[1]][0]]
+    #     y = [pos_B_3d[edge[0]][1], pos_B_3d[edge[1]][1]]
+    #     z = [pos_B_3d[edge[0]][2], pos_B_3d[edge[1]][2]]
+    #     ax.plot(x, y, z, c='red', alpha=0.3, linewidth=0.5)
+
+    # # 绘制对应关系的虚线
+    # for node_a, node_b in node_mapping.items():
+    #     x = [pos_A_3d[node_a][0], pos_B_3d[node_b][0]]
+    #     y = [pos_A_3d[node_a][1], pos_B_3d[node_b][1]]
+    #     z = [pos_A_3d[node_a][2], pos_B_3d[node_b][2]]
+    #     ax.plot(x, y, z, 'k--', alpha=0.1, linewidth=0.5)
+
+    # # 绘制网络A的节点
+    # nodes_A = np.array([pos_A_3d[node] for node in G_A.nodes()])
+    # ax.scatter(nodes_A[:, 0], nodes_A[:, 1], nodes_A[:, 2], 
+    #         c='lightblue', s=100, alpha=0.8, edgecolors='blue', label='网络A')
+
+    # # 绘制网络B的节点
+    # nodes_B = np.array([pos_B_3d[node] for node in G_B.nodes()])
+    # ax.scatter(nodes_B[:, 0], nodes_B[:, 1], nodes_B[:, 2], 
+    #         c='lightcoral', s=100, alpha=0.8, edgecolors='red', label='网络B')
+
+    # # 设置标签和标题
+    # ax.set_xlabel('X')
+    # ax.set_ylabel('Y')
+    # ax.set_zlabel('Z (网络层)')
+    # ax.set_title(f'双层网络3D可视化\n网络A (蓝色, z=0) 和 网络B (红色, z=1)\n虚线表示节点对应关系', fontsize=14)
+    # ax.legend()
+
+    # # 设置视角
+    # ax.view_init(elev=20, azim=45)
+
+    # plt.tight_layout()
+    # plt.show()
