@@ -1,0 +1,10 @@
+{
+    "initial_removal_fraction": 0.41,
+    "p_giant": 0.421,
+    "exitence_count": 421,
+    "parameters": {
+        "N": 1000,
+        "average_degree": 4,
+        "num_experiments": 1000
+    }
+}
