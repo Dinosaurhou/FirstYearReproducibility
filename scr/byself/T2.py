@@ -13,7 +13,7 @@ if __name__ == "__main__":
     
     # N = 100 节点数
     # 平均度 = 4，对于ER网络，p = <k>/(N-1)
-    N = 2000
+    N = 1000
     average_degree = 4
     p = average_degree / (N - 1)
 
@@ -21,6 +21,9 @@ if __name__ == "__main__":
     G_A = nx.erdos_renyi_graph(N, p)
     # 创建ER随机图 - 网络B（使用不同的随机种子）
     G_B = nx.erdos_renyi_graph(N, p)
+
+    # 设定巨片存在的标准大小
+    stand_giant_size = 0.33 * N
 
     # 打印网络A基本信息
     print("=== 网络A ===")
@@ -66,7 +69,7 @@ if __name__ == "__main__":
                 largest_cc_size = 0
 
             # 如果这个连通分量的大小>=10，就记录说明这次在此攻击比例下巨片存在，记录+1
-            if largest_cc_size >= 10:
+            if largest_cc_size >= stand_giant_size:
                 print(f"实验 {exp_num + 1}/{num_experiments}: 巨片存在，大小为 {largest_cc_size}")
                 exitence_count += 1
             else:
@@ -87,7 +90,7 @@ if __name__ == "__main__":
 
     # XXX:保存数据到文件
     # 确保目录存在
-    save_dir = "scr/byself"
+    save_dir = "scr/byself/out"
     os.makedirs(save_dir, exist_ok=True)
 
     # 保存数据为JSON格式
@@ -101,7 +104,7 @@ if __name__ == "__main__":
         }
     }
 
-    file_path = os.path.join(save_dir, 'cascade_failure_results1.json')
+    file_path = os.path.join(save_dir, 'cascade_failure_results_stand_giant.json')
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 
