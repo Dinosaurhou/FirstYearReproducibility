@@ -12,7 +12,7 @@ rcParams['axes.unicode_minus'] = False  # 正常显示负号
 if __name__ == "__main__":
     
     # 平均度 = 4，对于ER网络，p = <k>/(N-1)
-    N = 2000
+    N = 4000
     average_degree = 4
     p = average_degree / (N - 1)
     
@@ -41,8 +41,8 @@ if __name__ == "__main__":
     print(f"\n节点对应关系: {list(node_mapping.items())[:5]}...")  # 显示前5个
 
 
-    # 固定攻击比例为0.41
-    initial_removal_fraction = 0.41
+    # 固定攻击比例
+    initial_removal_fraction = 0.375
     num_experiments = 1000  # 模拟1000次
 
     print(f"\n{'='*50}")
@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
         # 如果这个连通分量的大小>=330，就记录说明这次在此攻击比例下巨片存在
         
-        if largest_cc_size >= stand_giant_size:
+        if largest_cc_size >= 330:
             exitence_count += 1
             print(f"实验 {exp_num + 1}/{num_experiments}: 巨片存在，大小为 {largest_cc_size}: 当前概率为 {exitence_count / (exp_num + 1):.4f}")
         else:
@@ -101,7 +101,7 @@ if __name__ == "__main__":
         }
     }
 
-    file_path = os.path.join(save_dir, 'cascade_failure_attack041_num1000.json')
+    file_path = os.path.join(save_dir, 'cascade_failure_attack0375_num2000.json')
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 

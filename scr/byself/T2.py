@@ -11,9 +11,8 @@ rcParams['axes.unicode_minus'] = False  # 正常显示负号
 
 if __name__ == "__main__":
     
-    # N = 100 节点数
     # 平均度 = 4，对于ER网络，p = <k>/(N-1)
-    N = 1000
+    N = 8000
     average_degree = 4
     p = average_degree / (N - 1)
 
@@ -46,7 +45,7 @@ if __name__ == "__main__":
     initial_removal_fractions = np.linspace(1 - 2.5 / average_degree, 1 - 2.36 / average_degree, 11)
     # final_gaint_fractions = []
     p_giants = []
-    num_experiments = 100 # 每个初始攻击比例重复100次
+    num_experiments = 150 # 每个初始攻击比例重复150次
 
     for initial_removal_fraction in initial_removal_fractions:
         print(f"\n{'='*50}")
@@ -69,11 +68,12 @@ if __name__ == "__main__":
                 largest_cc_size = 0
 
             # 如果这个连通分量的大小>=10，就记录说明这次在此攻击比例下巨片存在，记录+1
-            if largest_cc_size >= stand_giant_size:
-                print(f"实验 {exp_num + 1}/{num_experiments}: 巨片存在，大小为 {largest_cc_size}")
+            # if largest_cc_size >= stand_giant_size:
+            if largest_cc_size >= 10:
                 exitence_count += 1
+                print(f"实验 {exp_num + 1}/{num_experiments}: 巨片存在，大小为 {largest_cc_size}: 当前概率为 {exitence_count / (exp_num + 1):.4f}")
             else:
-                print(f"实验 {exp_num + 1}/{num_experiments}: 巨片不存在")
+                print(f"实验 {exp_num + 1}/{num_experiments}: 巨片不存在，大小为 {largest_cc_size}")
 
         # 计算巨片存在的概率
         p_giant = exitence_count / num_experiments
@@ -104,7 +104,7 @@ if __name__ == "__main__":
         }
     }
 
-    file_path = os.path.join(save_dir, 'cascade_failure_results_stand_giant.json')
+    file_path = os.path.join(save_dir, 'cf_N8000_data.json')
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 

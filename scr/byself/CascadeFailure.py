@@ -4,13 +4,13 @@ from typing import overload
 
 
 
-# 指定受到攻击的节点比例
-def cascade_failure(G1, G2, dependency_map, initial_removal_fraction):
+# 指定受到攻击的节点比例（按照簇逻辑删除对应网络的边）
+def cascade_failure_fig2(G1, G2, dependency_map, initial_removal_fraction):
     '''
     模拟相互依赖网络的级联失效过程
     参数:
-        G_A: 网络A (会被修改) 
-        G_B: 网络B (会被修改)
+        G1: 网络A (会被修改) 
+        G2: 网络B (会被修改)
         dependency_map: 依赖关系映射
         initial_removal_fraction: 初始移除的节点比例
     '''
@@ -35,7 +35,6 @@ def cascade_failure(G1, G2, dependency_map, initial_removal_fraction):
         if node in dependency_map:
             dependent_nodes = dependency_map[node]
             G2.remove_node(dependent_nodes)
-
 
     # 去记录两个网络有没有边被移除，F是这次没有移除边，T是有边被移除
     flag1 = True
@@ -89,6 +88,87 @@ def cascade_failure(G1, G2, dependency_map, initial_removal_fraction):
                     G1.remove_edge(node_a1, node_a2)
                     flag1 = True
     return G1, G2
+
+
+# 指定受到攻击的节点比例（选取每个阶段最大的连通分量）
+def cascade_failure_max(G1, G2, dependency_map, initial_removal_fraction):
+# 复制网络以避免修改原始网络
+    G1 = G1.copy()
+    G2 = G2.copy()
+    n = G1.number_of_nodes()
+
+    # TODO: 要注意如果攻击节点比例直接是1的话，整个网络都会被移除，就直接可以返回了
+    num_to_remove = int(n * initial_removal_fraction)
+    if num_to_remove >= n:
+        return 0.0
+    
+    # 步骤1: 初始随机攻击网络A
+    nodes_to_remove = np.random.choice(G1.nodes(), size=num_to_remove, replace=False)
+    # 移除网络A中的节点
+    G1.remove_nodes_from(nodes_to_remove)
+
+    # 步骤2: 更新网络B，初始移除网络B的节点
+    for node in nodes_to_remove:
+        if node in dependency_map:
+            dependent_nodes = dependency_map[node]
+            G2.remove_node(dependent_nodes)
+
+    # 记录每次迭代开始时节点的数量，用于判断是否达到稳定
+    last_A_nodes_count = len(G1.nodes())
+    last_B_nodes_count = len(G2.nodes())
+    current_A_nodes_count = None
+    current_B_nodes_count = None
+
+    # 记录阶段数
+    stage = 0
+
+    # 级联失效过程
+    # while True:
+    while last_A_nodes_count != current_A_nodes_count or last_B_nodes_count != current_B_nodes_count:
+        stage += 1
+        # 阶段1: 网络A内部失效，保留最大连通分量
+        if G1.number_of_nodes() > 0:
+            largest_cc_A = max(nx.connected_components(G1), key=len)
+            nodes_to_remove_A = set(G1.nodes()) - set(largest_cc_A)
+            if nodes_to_remove_A:
+                G1.remove_nodes_from(nodes_to_remove_A)
+        else:
+            nodes_to_remove_A = set()
+        print(f"阶段 {stage} 完成网络A内部失效，移除节点数: {len(nodes_to_remove_A)}， 剩余节点数: {G1.number_of_nodes()}，巨片存在比例为 {G1.number_of_nodes()/n:.4f}")
+
+        stage += 1
+        # 阶段2: 跨网络依赖失效 (A -> B)
+        nodes_to_remove_B = set(G2.nodes()) & nodes_to_remove_A # 假设节点 i in A 依赖 i in B
+        if nodes_to_remove_B:
+            G2.remove_nodes_from(nodes_to_remove_B)
+        # 网络B内部失效，保留最大连通分量
+        if G2.number_of_nodes() > 0:
+            largest_cc_B = max(nx.connected_components(G2), key=len)
+            nodes_to_remove_B_internal = set(G2.nodes()) - set(largest_cc_B)
+            if nodes_to_remove_B_internal:
+                G2.remove_nodes_from(nodes_to_remove_B_internal) 
+        
+        print(f"阶段 {stage} 完成网络B内部失效，移除节点数: {len(nodes_to_remove_B_internal)}， 剩余节点数: {G2.number_of_nodes()}，巨片存在比例为 {G2.number_of_nodes()/n:.4f}")
+
+        # 保留网络B最大连通分量之后，更新网络A
+        nodes_to_remove_A_from_B = set(G1.nodes()) & nodes_to_remove_B_internal # 假设节点 i in A 依赖 i in B
+        if nodes_to_remove_A_from_B:
+            G1.remove_nodes_from(nodes_to_remove_A_from_B)
+
+        # 检查是否达到稳定状态
+        current_A_nodes_count = len(G1.nodes())
+        current_B_nodes_count = len(G2.nodes())
+        if current_A_nodes_count == last_A_nodes_count and current_B_nodes_count == last_B_nodes_count:
+            break
+
+        last_A_nodes_count = current_A_nodes_count
+        last_B_nodes_count = current_B_nodes_count
+
+    return G1, G2
+
+
+
+
 
 
 
