@@ -7,12 +7,14 @@ import CascadeFailure as cf
 import os
 import json
 
+
 rcParams['axes.unicode_minus'] = False  # 正常显示负号
 
+
 if __name__ == "__main__":
-    
-    # 平均度 = 4，对于ER网络，p = <k>/(N-1)
-    N = 8000
+
+# 平均度 = 4，对于ER网络，p = <k>/(N-1)
+    N = 16000
     average_degree = 4
     p = average_degree / (N - 1)
 
@@ -40,8 +42,9 @@ if __name__ == "__main__":
     node_mapping = {i: i for i in range(N)}
     print(f"\n节点对应关系: {list(node_mapping.items())[:5]}...")  # 显示前5个
 
+
     # 进行多次实验，改变初始攻击比例
-    initial_removal_fractions = np.linspace(1 - 2.5 / average_degree, 1 - 2.36 / average_degree, 11)
+    initial_removal_fractions = np.linspace(1 - 2.5 / average_degree, 1 - 2.36 / average_degree, 15)
     # final_gaint_fractions = []
     p_giants = []
     num_experiments = 150 # 每个初始攻击比例重复150次
@@ -53,11 +56,9 @@ if __name__ == "__main__":
 
         exitence_count = 0  # 记录巨片存在的次数
         
-        # 对每个初始攻击比例进行30次实验
-        
         for exp_num in range(num_experiments):
             
-            GA_after, GB_after = cf.cascade_failure(G_A, G_B, node_mapping, initial_removal_fraction)
+            GA_after, GB_after = cf.cascade_failure_max(G_A, G_B, node_mapping, initial_removal_fraction)
 
             # 获取网络A中的最大连通分量
             if GA_after.number_of_nodes() > 0:
@@ -103,7 +104,7 @@ if __name__ == "__main__":
         }
     }
 
-    file_path = os.path.join(save_dir, 'cf_N8000_data.json')
+    file_path = os.path.join(save_dir, 'cf_N' + str(N) + '_max_data.json')
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 
@@ -117,5 +118,7 @@ if __name__ == "__main__":
     plt.title("巨片存在概率与初始攻击比例的关系")
     plt.grid()
     plt.show()
+
+
 
 

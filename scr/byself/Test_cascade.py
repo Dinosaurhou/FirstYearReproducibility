@@ -19,7 +19,7 @@ N = len(G1.nodes)
 
 node_mapping = {i: i for i in range(N)}
 
-G1_after, G2_after = cf.cascade_failure_specific_nodes(G1, G2, node_mapping, [7])
+G1_after, G2_after = cf.cascade_failure_max_specific_nodes(G1, G2, node_mapping, [1])
 
 
 # 设置中文字体

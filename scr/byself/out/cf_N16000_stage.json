@@ -1,0 +1,13 @@
+{
+    "initial_removal_fractions": [
+        0.38749999999999996
+    ],
+    "p_giants": [
+        0.32
+    ],
+    "parameters": {
+        "N": 16000,
+        "average_degree": 4,
+        "num_experiments": 100
+    }
+}
