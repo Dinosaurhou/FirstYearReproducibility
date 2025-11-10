@@ -11,20 +11,13 @@ import json
 rcParams['axes.unicode_minus'] = False  # 正常显示负号
 
 
-if __name__ == "__main__":
-
-# 平均度 = 4，对于ER网络，p = <k>/(N-1)
-    N = 16000
-    average_degree = 4
+def create_er_graph(N, average_degree):
+    """创建一个Erdos-Renyi随机图"""
     p = average_degree / (N - 1)
-
     # 创建ER随机图 - 网络A
     G_A = nx.erdos_renyi_graph(N, p)
     # 创建ER随机图 - 网络B（使用不同的随机种子）
     G_B = nx.erdos_renyi_graph(N, p)
-
-    # 设定巨片存在的标准大小
-    stand_giant_size = 0.33 * N
 
     # 打印网络A基本信息
     print("=== 网络A ===")
@@ -40,16 +33,23 @@ if __name__ == "__main__":
 
     # 存储节点对应关系的字典：key为网络A的节点，value为网络B的对应节点
     node_mapping = {i: i for i in range(N)}
-    print(f"\n节点对应关系: {list(node_mapping.items())[:5]}...")  # 显示前5个
 
+    return G_A, G_B, node_mapping
+
+
+if __name__ == "__main__":
+
+    N = 16000
+    average_degree = 4
 
     # 进行多次实验，改变初始攻击比例
     initial_removal_fractions = np.linspace(1 - 2.5 / average_degree, 1 - 2.36 / average_degree, 15)
-    # final_gaint_fractions = []
+    
     p_giants = []
-    num_experiments = 150 # 每个初始攻击比例重复150次
+    num_experiments = 200 # 每个初始攻击比例重复150次
 
     for initial_removal_fraction in initial_removal_fractions:
+
         print(f"\n{'='*50}")
         print(f"初始攻击比例: {initial_removal_fraction:.4f}")
         print(f"{'='*50}")
@@ -58,7 +58,10 @@ if __name__ == "__main__":
         
         for exp_num in range(num_experiments):
             
-            GA_after, GB_after = cf.cascade_failure_max(G_A, G_B, node_mapping, initial_removal_fraction)
+            # 创建两个ER随机图和节点映射
+            G_A, G_B, node_mapping = create_er_graph(N, average_degree)
+
+            GA_after, GB_after, history= cf.cascade_failure_max(G_A, G_B, node_mapping, initial_removal_fraction)
 
             # 获取网络A中的最大连通分量
             if GA_after.number_of_nodes() > 0:
@@ -68,7 +71,6 @@ if __name__ == "__main__":
                 largest_cc_size = 0
 
             # 如果这个连通分量的大小>=10，就记录说明这次在此攻击比例下巨片存在，记录+1
-            # if largest_cc_size >= stand_giant_size:
             if largest_cc_size >= 10:
                 exitence_count += 1
                 print(f"实验 {exp_num + 1}/{num_experiments}: 巨片存在，大小为 {largest_cc_size}: 当前概率为 {exitence_count / (exp_num + 1):.4f}")
