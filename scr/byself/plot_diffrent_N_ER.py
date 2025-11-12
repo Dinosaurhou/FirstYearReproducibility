@@ -99,6 +99,7 @@ if __name__ == "__main__":
         'cf_N4000_max_data.json',
         'cf_N8000_max_data.json',
         'cf_N16000_max_data.json',
+        'cf_N32000_max_data.json'
         # 在这里添加更多文件名，例如: 'cf_N6000_max_data.json'
     ]
 

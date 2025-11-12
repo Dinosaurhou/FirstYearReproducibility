@@ -39,7 +39,7 @@ def create_er_graph(N, average_degree):
 
 if __name__ == "__main__":
 
-    N = 16000
+    N = 32000
     average_degree = 4
 
     # 进行多次实验，改变初始攻击比例
@@ -47,6 +47,8 @@ if __name__ == "__main__":
     
     p_giants = []
     num_experiments = 200 # 每个初始攻击比例重复150次
+
+    G_A, G_B, node_mapping = create_er_graph(N, average_degree)
 
     for initial_removal_fraction in initial_removal_fractions:
 
@@ -59,7 +61,7 @@ if __name__ == "__main__":
         for exp_num in range(num_experiments):
             
             # 创建两个ER随机图和节点映射
-            G_A, G_B, node_mapping = create_er_graph(N, average_degree)
+            # G_A, G_B, node_mapping = create_er_graph(N, average_degree)
 
             GA_after, GB_after, history= cf.cascade_failure_max(G_A, G_B, node_mapping, initial_removal_fraction)
 

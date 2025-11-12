@@ -39,16 +39,16 @@ def create_er_graph(N, average_degree):
 if __name__ == "__main__":
 
     # 平均度 = 4，对于ER网络，p = <k>/(N-1)
-    N = 2000
+    N = 32000
     average_degree = 4
 
-    # G_A, G_B, node_mapping = create_er_graph(N, average_degree)
+    G_A, G_B, node_mapping = create_er_graph(N, average_degree)
 
     # 进行多次实验，改变初始攻击比例(1 - 2.4554 / 4)
     initial_removal_fraction = 1 - 2.4554 / average_degree
     
     p_giants = []
-    num_experiments = 3000 # 假设实验1000次
+    num_experiments = 3000 # 假设实验3000次
 
     print(f"\n{'='*50}")
     print(f"初始攻击比例: {initial_removal_fraction:.4f}")
@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     for exp_num in range(num_experiments):
 
-        G_A, G_B, node_mapping = create_er_graph(N, average_degree)
+        # G_A, G_B, node_mapping = create_er_graph(N, average_degree)
         
         GA_after, GB_after, final_history = cf.cascade_failure_max_change_stagecount(G_A, G_B, node_mapping, initial_removal_fraction)
 
