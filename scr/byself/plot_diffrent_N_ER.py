@@ -102,6 +102,9 @@ if __name__ == "__main__":
         'cf_N32000_max_data.json'
         # 在这里添加更多文件名，例如: 'cf_N6000_max_data.json'
     ]
+    # json_files = [
+    #     'cf_ER_N30000_different_data.json'
+    # ]
 
     # 加载所有数据文件
     all_data = [load_data(f) for f in json_files]
