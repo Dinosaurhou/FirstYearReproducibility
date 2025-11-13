@@ -88,7 +88,7 @@ def cascade_failure_fig2(G1, G2, dependency_map, initial_removal_fraction):
     return G1, G2
 
 # 指定受到攻击的节点比例（按照簇逻辑删除对应网络的边）
-# 添加记录级联阶段stage的功能
+# TODO:未实现添加记录级联阶段stage的功能
 def cascade_failure_fig2_stage(G1, G2, dependency_map, initial_removal_fraction):
     '''
     模拟相互依赖网络的级联失效过程
