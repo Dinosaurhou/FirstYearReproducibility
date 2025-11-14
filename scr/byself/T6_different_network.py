@@ -8,61 +8,7 @@ import GenerateNetwork as gn
 import os
 import json
 
-
 rcParams['axes.unicode_minus'] = False  # 正常显示负号
-
-
-def create_er_graph(N, average_degree):
-    """创建一个Erdos-Renyi随机图"""
-    p = average_degree / (N - 1)
-    # 创建ER随机图 - 网络A
-    G_A = nx.erdos_renyi_graph(N, p)
-    # 创建ER随机图 - 网络B（使用不同的随机种子）
-    G_B = nx.erdos_renyi_graph(N, p)
-
-    # 打印网络A基本信息
-    print("=== 网络A ===")
-    print(f"节点数: {G_A.number_of_nodes()}")
-    print(f"边数: {G_A.number_of_edges()}")
-    print(f"实际平均度: {2 * G_A.number_of_edges() / G_A.number_of_nodes():.2f}")
-
-    # 打印网络B基本信息
-    print("\n=== 网络B ===")
-    print(f"节点数: {G_B.number_of_nodes()}")
-    print(f"边数: {G_B.number_of_edges()}")
-    print(f"实际平均度: {2 * G_B.number_of_edges() / G_B.number_of_nodes():.2f}")
-
-    # 存储节点对应关系的字典：key为网络A的节点，value为网络B的对应节点
-    node_mapping = {i: i for i in range(N)}
-
-    return G_A, G_B, node_mapping
-
-
-def create_rr_graph(N, average_degree):
-    """创建一个随机正则图"""
-    k = average_degree
-    # 创建随机正则图 - 网络A
-    G_A = nx.random_regular_graph(k, N)
-    # 创建随机正则图 - 网络B（使用不同的随机种子）
-    G_B = nx.random_regular_graph(k, N)
-
-    # 打印网络A基本信息
-    print("=== 网络A ===")
-    print(f"节点数: {G_A.number_of_nodes()}")
-    print(f"边数: {G_A.number_of_edges()}")
-    print(f"实际平均度: {2 * G_A.number_of_edges() / G_A.number_of_nodes():.2f}")
-
-    # 打印网络B基本信息
-    print("\n=== 网络B ===")
-    print(f"节点数: {G_B.number_of_nodes()}")
-    print(f"边数: {G_B.number_of_edges()}")
-    print(f"实际平均度: {2 * G_B.number_of_edges() / G_B.number_of_nodes():.2f}")
-
-    # 存储节点对应关系的字典：key为网络A的节点，value为网络B的对应节点
-    node_mapping = {i: i for i in range(N)}
-
-    return G_A, G_B, node_mapping
-
 
 if __name__ == "__main__":
 
@@ -70,12 +16,14 @@ if __name__ == "__main__":
     average_degree = 4
 
     # 进行多次实验，改变初始攻击比例
-    initial_removal_fractions = np.linspace(1 - 0.6375, 1 - 0.55, 21)
-    
-    p_giants = []
-    num_experiments = 300 # 每个初始攻击比例重复150次
+    initial_removal_fractions = np.linspace(1 - 0.75, 1 - 0.55, 50)
+    # initial_removal_fractions = list([0.9])
 
-    G_A, G_B, node_mapping = create_rr_graph(N, average_degree)
+    p_giants = []
+    num_experiments = 300 # 每个初始攻击比例重复300次
+
+    # G_A, G_B, node_mapping = gn.create_rr_graph(N, average_degree)
+    G_A, G_B, node_mapping = gn.create_sf_graph(N, average_degree, gamma=2.7)
 
     for initial_removal_fraction in initial_removal_fractions:
 
@@ -89,6 +37,7 @@ if __name__ == "__main__":
             
             # 创建两个ER随机图和节点映射
             # G_A, G_B, node_mapping = create_er_graph(N, average_degree)
+            # G_A, G_B, node_mapping = gn.create_sf_graph(N, average_degree, gamma=3.0)
 
             GA_after, GB_after, history= cf.cascade_failure_max(G_A, G_B, node_mapping, initial_removal_fraction)
 
@@ -131,11 +80,12 @@ if __name__ == "__main__":
         'parameters': {
             'N': N,
             'average_degree': average_degree,
-            'num_experiments': num_experiments
+            'num_experiments': num_experiments,
+            'network_type': 'SF3'
         }
     }
 
-    file_path = os.path.join(save_dir, 'cf_RR_N' + str(N) + '_different_data.json')
+    file_path = os.path.join(save_dir, 'cf_SF3_N' + str(N) + '_data.json')
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 

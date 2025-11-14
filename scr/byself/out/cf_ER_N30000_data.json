@@ -48,6 +48,7 @@
     "parameters": {
         "N": 30000,
         "average_degree": 4,
-        "num_experiments": 300
+        "num_experiments": 300,
+        "network_type": "ER"
     }
 }

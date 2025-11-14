@@ -2,7 +2,6 @@ import json
 import matplotlib.pyplot as plt
 import os
 import numpy as np
-from scipy.interpolate import make_interp_spline
 
 def load_data(filename):
     """加载JSON数据文件"""
@@ -41,52 +40,35 @@ def plot_multiple_datasets(datasets):
         # 提取数据并转换为numpy数组
         x_attack = np.array(data['initial_removal_fractions'])
         y = np.array(data['p_giants'])
-        n = data['parameters']['N']
+        
+        # 获取网络类型作为图例标签
+        network_type = data['parameters'].get('network_type', '未知网络类型')
 
-        # 1. 将攻击比例转换为幸存节点比例
+        # 将攻击比例转换为幸存节点比例
         x_survive = 1 - x_attack
 
-        # 为了进行正确的插值，需要按x轴对数据进行排序
+        # 按x轴对数据进行排序
         sort_indices = np.argsort(x_survive)
         x_sorted = x_survive[sort_indices]
         y_sorted = y[sort_indices]
 
-        # 2. 对曲线进行平滑处理
-        # 确保有足够的数据点进行三次样条插值 (k=3)
-        if len(x_sorted) > 3:
-            # 创建一个更密集的x轴用于绘制平滑曲线
-            x_smooth = np.linspace(x_sorted.min(), x_sorted.max(), 300)
-            # 创建样条插值函数
-            spl = make_interp_spline(x_sorted, y_sorted, k=3)
-            y_smooth = spl(x_smooth)
-            
-            # 绘制平滑曲线和原始数据点
-            line_style = linestyles[i % len(linestyles)]
-            marker_style = markers[i % len(markers)]
-            
-            # 绘制平滑曲线（不带标记）
-            plt.plot(x_smooth, y_smooth, 
-                     linestyle=line_style, 
-                     label=f'N = {n}')
-            # 在原始数据点位置绘制标记（不带连线）
-            plt.plot(x_sorted, y_sorted, 
-                     marker=marker_style, 
-                     linestyle='none',
-                     color=plt.gca().lines[-1].get_color()) # 确保标记和曲线颜色一致
-        else:
-            # 如果数据点太少，直接绘制原始折线图
-            plt.plot(x_sorted, y_sorted, 
-                     marker=markers[i % len(markers)], 
-                     linestyle=linestyles[i % len(linestyles)], 
-                     label=f'N = {n}')
-
+        # 绘制曲线
+        line_style = linestyles[i % len(linestyles)]
+        marker_style = markers[i % len(markers)]
+        
+        plt.plot(x_sorted, y_sorted, 
+                 marker=marker_style, 
+                 linestyle=line_style, 
+                 linewidth=2,
+                 markersize=6,
+                 label=f'{network_type}')
 
     # 设置图表属性
-    plt.title('不同网络规模下巨片存在概率与幸存节点比例的关系', fontsize=16)
-    plt.xlabel('幸存节点比例 (1-p)', fontsize=12)
-    plt.ylabel('巨片存在概率 (P_giant)', fontsize=12)
+    plt.title('不同网络类型下巨片存在概率与幸存节点比例的关系', fontsize=16, fontweight='bold')
+    plt.xlabel('幸存节点比例 (1-p)', fontsize=14)
+    plt.ylabel('巨片存在概率 (P_giant)', fontsize=14)
     plt.grid(True, linestyle='--', alpha=0.6)
-    plt.legend()
+    plt.legend(fontsize=12, loc='best')
     plt.tight_layout()
 
     # 显示图表
@@ -95,12 +77,8 @@ def plot_multiple_datasets(datasets):
 if __name__ == "__main__":
     # 要加载的JSON文件名列表
     json_files = [
-        'cf_N2000_max_data.json', 
-        'cf_N4000_max_data.json',
-        'cf_N8000_max_data.json',
-        'cf_N16000_max_data.json',
-        'cf_N32000_max_data.json'
-        # 在这里添加更多文件名，例如: 'cf_N6000_max_data.json'
+        'cf_ER_N30000_data.json',
+        'cf_RR_N30000_data.json'
     ]
 
     # 加载所有数据文件
