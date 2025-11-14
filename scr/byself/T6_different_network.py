@@ -16,14 +16,14 @@ if __name__ == "__main__":
     average_degree = 4
 
     # 进行多次实验，改变初始攻击比例
-    initial_removal_fractions = np.linspace(1 - 0.75, 1 - 0.55, 50)
+    initial_removal_fractions = np.linspace(1 - 0.725, 1 - 0.55, 50)
     # initial_removal_fractions = list([0.9])
 
     p_giants = []
     num_experiments = 300 # 每个初始攻击比例重复300次
 
     # G_A, G_B, node_mapping = gn.create_rr_graph(N, average_degree)
-    G_A, G_B, node_mapping = gn.create_sf_graph(N, average_degree, gamma=2.7)
+    G_A, G_B, node_mapping = gn.create_sf_graph(N, average_degree, 2.7)
 
     for initial_removal_fraction in initial_removal_fractions:
 
@@ -85,7 +85,7 @@ if __name__ == "__main__":
         }
     }
 
-    file_path = os.path.join(save_dir, 'cf_SF3_N' + str(N) + '_data.json')
+    file_path = os.path.join(save_dir, 'cf_SF2.7_N' + str(N) + '_data.json')
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 

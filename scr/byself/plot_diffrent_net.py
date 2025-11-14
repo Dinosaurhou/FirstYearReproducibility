@@ -78,7 +78,8 @@ if __name__ == "__main__":
     # 要加载的JSON文件名列表
     json_files = [
         'cf_ER_N30000_data.json',
-        'cf_RR_N30000_data.json'
+        'cf_RR_N30000_data.json',
+        'cf_SF2.7_N30000_data.json'
     ]
 
     # 加载所有数据文件
