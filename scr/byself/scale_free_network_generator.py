@@ -274,15 +274,7 @@ class ScaleFreeNetworkGenerator:
         return best_G if best_G is not None else nx.Graph()
     
     def _ensure_simple_graph(self, G: nx.Graph) -> nx.Graph:
-        """
-        确保图是简单图（无自环、无重边）
-        
-        参数:
-            G: 输入图
-            
-        返回:
-            清理后的简单图
-        """
+        """确保图是简单图（无自环、无重边）"""
         # 移除所有自环
         self_loops = list(nx.selfloop_edges(G))
         if self_loops:
@@ -298,6 +290,43 @@ class ScaleFreeNetworkGenerator:
         
         return G_simple
     
+    def _generate_ba_network(self) -> nx.Graph:
+        """
+        使用 Barabási-Albert (BA) 模型生成网络
+        
+        BA 模型对应 γ = 3 的情况
+        
+        返回:
+            生成的BA网络
+        """
+        # BA模型参数：m = 每个新节点连接的边数
+        # 平均度 ≈ 2m，所以 m ≈ avg_degree / 2
+        m = max(1, int(self.avg_degree / 2))
+        
+        print(f"  使用 BA 模型参数: m = {m}")
+        
+        # 生成BA网络
+        G = nx.barabasi_albert_graph(self.N, m, np.random)
+        
+        # 转换为简单图（移除可能的自环，虽然BA模型理论上不会产生自环）
+        G = nx.Graph(G)
+        G.remove_edges_from(nx.selfloop_edges(G))
+        
+        # 计算实际统计量
+        actual_degrees = [G.degree(n) for n in G.nodes()]
+        actual_avg_degree = np.mean(actual_degrees)
+        avg_degree_error = abs(actual_avg_degree - self.avg_degree)
+        
+        print(f"✓ BA 网络生成成功")
+        print(f"  节点数: {G.number_of_nodes()} (严格)")
+        print(f"  边数: {G.number_of_edges()}")
+        print(f"  平均度: {actual_avg_degree:.4f} (目标: {self.avg_degree})")
+        print(f"  平均度误差: {avg_degree_error:.4f}")
+        print(f"  自环数: {nx.number_of_selfloops(G)} (应为0)")
+        print(f"  是否连通: {nx.is_connected(G)}")
+        
+        return G
+    
     def generate(self, tolerance: float = 0.08, 
                  degree_dist_tolerance: float = 0.09) -> nx.Graph:
         """
@@ -310,10 +339,16 @@ class ScaleFreeNetworkGenerator:
         返回:
             生成的网络图
         """
+        # 特殊情况：gamma = 3 时使用 BA 模型
+        if abs(self.gamma - 3.0) < 1e-6:
+            print(f"检测到 γ={self.gamma}，使用 Barabási-Albert (BA) 模型")
+            return self._generate_ba_network()
+        
+        # 其他情况使用配置模型
         best_graph = None
         best_avg_error = float('inf')
         best_dist_error = float('inf')
-        best_combined_score = float('inf')  # 综合得分
+        best_combined_score = float('inf')
         
         for iteration in range(self.max_iterations):
             # 生成度序列
@@ -347,8 +382,7 @@ class ScaleFreeNetworkGenerator:
             # 计算度分布误差
             degree_dist_error = self.check_degree_distribution(actual_degrees)
             
-            # 计算综合得分（归一化后的加权和）
-            # 将两个误差归一化到相同尺度
+            # 计算综合得分
             normalized_avg_error = avg_degree_error / tolerance
             normalized_dist_error = degree_dist_error / degree_dist_tolerance
             combined_score = normalized_avg_error + normalized_dist_error
@@ -424,25 +458,25 @@ class ScaleFreeNetworkGenerator:
             return float('inf')
         
         # 计算理论概率
-        k_min = max(1, min(degrees_unique))  # 确保 k_min >= 1
+        k_min = max(1, min(degrees_unique))
         k_max = max(degrees_unique)
         
         if k_min <= 0 or k_max <= 0:
             return float('inf')
         
-        # 归一化常数
-        C = sum([k**(-self.gamma) for k in range(k_min, k_max + 1)])
+        # 归一化常数（使用浮点数）
+        C = sum([float(k)**(-self.gamma) for k in range(k_min, k_max + 1)])
         
         if C <= 0:
             return float('inf')
         
         errors = []
         for k in degrees_unique:
-            if k < k_min:  # 跳过小于k_min的节点
+            if k < k_min:
                 continue
             
             actual_prob = degree_count[k] / len(actual_degrees)
-            theoretical_prob = k**(-self.gamma) / C
+            theoretical_prob = float(k)**(-self.gamma) / C
             
             if theoretical_prob > 0:
                 relative_error = abs(actual_prob - theoretical_prob) / theoretical_prob
@@ -458,28 +492,36 @@ class ScaleFreeNetworkGenerator:
             G: 网络图
             save_path: 保存路径（可选）
         """
+        plt.rcParams['font.sans-serif'] = ['SimHei']
+        plt.rcParams['axes.unicode_minus'] = False
 
-        
         degrees = [G.degree(n) for n in G.nodes()]
         degree_count = Counter(degrees)
         
         # 提取度值和频率
         k_values = sorted([k for k in degree_count.keys() if k > 0])
+        
+        if len(k_values) == 0:
+            print("警告: 网络中没有度大于0的节点")
+            return
+        
         frequencies = [degree_count[k] for k in k_values]
         probabilities = [f / len(degrees) for f in frequencies]
         
         # 理论分布
         k_min = min(k_values)
         k_max = max(k_values)
-        k_theory = np.arange(k_min, k_max + 1)
-        C = sum([k**(-self.gamma) for k in k_theory])
-        p_theory = [k**(-self.gamma) / C for k in k_theory]
+        k_theory = np.arange(k_min, k_max + 1, dtype=float)  # 使用浮点数
+        
+        # 计算归一化常数 C（确保使用浮点数运算）
+        C = sum([float(k)**(-self.gamma) for k in k_theory])
+        p_theory = [float(k)**(-self.gamma) / C for k in k_theory]
         
         # 绘图
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
         
         # 线性坐标
-        ax1.scatter(k_values, probabilities, alpha=0.6, label='实际分布', s=50)
+        ax1.scatter(k_values, probabilities, alpha=0.6, label='实际分布', s=50, color='blue')
         ax1.plot(k_theory, p_theory, 'r-', label=f'理论分布 (γ={self.gamma})', linewidth=2)
         ax1.set_xlabel('度 k', fontsize=12)
         ax1.set_ylabel('概率 P(k)', fontsize=12)
@@ -488,7 +530,7 @@ class ScaleFreeNetworkGenerator:
         ax1.grid(True, alpha=0.3)
         
         # 对数坐标
-        ax2.scatter(k_values, probabilities, alpha=0.6, label='实际分布', s=50)
+        ax2.scatter(k_values, probabilities, alpha=0.6, label='实际分布', s=50, color='blue')
         ax2.plot(k_theory, p_theory, 'r-', label=f'理论分布 (γ={self.gamma})', linewidth=2)
         ax2.set_xlabel('度 k', fontsize=12)
         ax2.set_ylabel('概率 P(k)', fontsize=12)
@@ -502,7 +544,7 @@ class ScaleFreeNetworkGenerator:
         
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"图像已保存到: {save_path}")
+            print(f"✓ 图像已保存到: {save_path}")
         
         plt.show()
     
@@ -539,12 +581,16 @@ class ScaleFreeNetworkGenerator:
 
 
 if __name__ == "__main__":
+
+    # 设置中文字体，以防乱码
+    plt.rcParams['font.sans-serif'] = ['SimHei']
+    plt.rcParams['axes.unicode_minus'] = False
     
     generatorSF = ScaleFreeNetworkGenerator(
         N=30000,
         avg_degree=4.0,
-        gamma=2.3,
-        max_iterations=5000
+        gamma=2.7,
+        max_iterations=6000
     )
 
     print("\n" + "="*50)
@@ -553,7 +599,7 @@ if __name__ == "__main__":
     
     # 定义保存路径
     save_dir = "scr/byself/saved_networks"
-    network_file = f"{save_dir}/SF_N{generatorSF.N}_k{generatorSF.avg_degree}_gamma{generatorSF.gamma}.graphml"
+    network_file = f"{save_dir}/SFA_N{generatorSF.N}_k{generatorSF.avg_degree}_gamma{generatorSF.gamma}.graphml"
     
     # 检查文件是否已存在
     if Path(network_file).exists():
@@ -567,4 +613,4 @@ if __name__ == "__main__":
         NetworkIO.save_graph(GA, network_file, format='graphml', include_metadata=False)
     
     generatorSF.print_network_stats(GA)
-    generatorSF.plot_degree_distribution(GA, save_path='scale_free_network_gamma2.png')
+    generatorSF.plot_degree_distribution(GA, save_path='scale_free_network_gamma3.png')

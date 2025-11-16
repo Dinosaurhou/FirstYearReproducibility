@@ -44,7 +44,7 @@ def plot_multiple_datasets(datasets):
         n = data['parameters']['N']
 
         # 1. 将攻击比例转换为幸存节点比例
-        x_survive = 1 - x_attack
+        x_survive = (1 - x_attack) * 4
 
         # 为了进行正确的插值，需要按x轴对数据进行排序
         sort_indices = np.argsort(x_survive)
@@ -80,6 +80,13 @@ def plot_multiple_datasets(datasets):
                      linestyle=linestyles[i % len(linestyles)], 
                      label=f'N = {n}')
 
+    # 添加一条垂直于x轴的线，表示理论临界点
+    critical_point = 2.4554
+    plt.axvline(x=critical_point, color='r', linestyle='--', linewidth=2)
+    
+    # 在垂直线旁边添加标注
+    # y_pos可以根据图表的美观程度进行调整，这里选择0.5作为中间位置
+    plt.text(critical_point, 0.5, f'<k>*{critical_point}', color='r', fontsize=12)
 
     # 设置图表属性
     plt.title('不同网络规模下巨片存在概率与幸存节点比例的关系', fontsize=16)

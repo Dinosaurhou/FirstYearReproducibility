@@ -15,14 +15,20 @@ if __name__ == "__main__":
     N = 30000
     average_degree = 4
 
-    # 进行多次实验，改变初始攻击比例
-    initial_removal_fractions = np.linspace(1 - 0.725, 1 - 0.55, 50)
+    # 进行多次实验，改变初始攻击比例，λ=3
+    # initial_removal_fractions = np.linspace(1 - 0.7125, 1 - 0.55, 40)
+    # λ=2.3
+    # initial_removal_fractions = np.linspace(1 - 0.78625, 1 - 0.55, 50)
+    # λ=2.7
+    initial_removal_fractions = np.linspace(1 - 0.75, 1 - 0.55, 50)
+
     # initial_removal_fractions = list([0.9])
 
     p_giants = []
     num_experiments = 300 # 每个初始攻击比例重复300次
 
     # G_A, G_B, node_mapping = gn.create_rr_graph(N, average_degree)
+    # G_A, G_B, node_mapping = gn.create_sf_graph(N, average_degree, 3.0)
     G_A, G_B, node_mapping = gn.create_sf_graph(N, average_degree, 2.7)
 
     for initial_removal_fraction in initial_removal_fractions:
@@ -37,9 +43,8 @@ if __name__ == "__main__":
             
             # 创建两个ER随机图和节点映射
             # G_A, G_B, node_mapping = create_er_graph(N, average_degree)
-            # G_A, G_B, node_mapping = gn.create_sf_graph(N, average_degree, gamma=3.0)
 
-            GA_after, GB_after, history= cf.cascade_failure_max(G_A, G_B, node_mapping, initial_removal_fraction)
+            GA_after, GB_after, history= cf.cascade_failure_max_change_stagecount(G_A, G_B, node_mapping, initial_removal_fraction)
 
             # 获取网络A中的最大连通分量
             if GA_after.number_of_nodes() > 0:
@@ -81,7 +86,7 @@ if __name__ == "__main__":
             'N': N,
             'average_degree': average_degree,
             'num_experiments': num_experiments,
-            'network_type': 'SF3'
+            'network_type': 'SF2.7'
         }
     }
 

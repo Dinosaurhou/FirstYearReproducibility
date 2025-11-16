@@ -80,7 +80,22 @@ def create_sf_graph(_N, _average_degree, _gamma):
     print(f"实际平均度: {2 * G_B.number_of_edges() / G_B.number_of_nodes():.2f}")
 
     # 存储节点对应关系的字典：key为网络A的节点，value为网络B的对应节点
-    node_mapping = {i: i for i in range(_N)}
+    # node_mapping = {i: i for i in range(_N)}
+
+    # 创建随机节点对应关系
+    nodes_A = list(G_A.nodes())
+    nodes_B = list(G_B.nodes())
+    
+    # 确保两个网络节点数相同
+    if len(nodes_A) != len(nodes_B):
+        raise ValueError(f"两个网络的节点数不同: G_A={len(nodes_A)}, G_B={len(nodes_B)}")
+    
+    # 打乱网络B的节点顺序
+    random.shuffle(nodes_B)
+    node_mapping = {nodes_A[i]: nodes_B[i] for i in range(len(nodes_A))}
+    
+    print(f"\n=== 节点映射 (SF) ===")
+    print(f"已创建随机节点对应关系")
 
     return G_A, G_B, node_mapping
 

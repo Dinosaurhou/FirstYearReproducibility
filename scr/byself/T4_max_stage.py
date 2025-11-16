@@ -24,9 +24,6 @@ if __name__ == "__main__":
     # 创建ER随机图 - 网络B（使用不同的随机种子）
     G_B = nx.erdos_renyi_graph(N, p)
 
-    # 设定巨片存在的标准大小
-    stand_giant_size = 0.33 * N
-
     # 打印网络A基本信息
     print("=== 网络A ===")
     print(f"节点数: {G_A.number_of_nodes()}")
@@ -63,7 +60,7 @@ if __name__ == "__main__":
 
     for exp_num in range(num_experiments):
         
-        GA_after, GB_after, final_history = cf.cascade_failure_max(G_A, G_B, node_mapping, initial_removal_fraction)
+        GA_after, GB_after, final_history = cf.cascade_failure_max_change_stagecount(G_A, G_B, node_mapping, initial_removal_fraction)
 
         # --- 新增：处理并绘制当前实验的历史数据 ---
         if final_history:
