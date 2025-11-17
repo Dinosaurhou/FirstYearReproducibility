@@ -18,9 +18,9 @@ if __name__ == "__main__":
     # 进行多次实验，改变初始攻击比例，λ=3
     # initial_removal_fractions = np.linspace(1 - 0.7125, 1 - 0.55, 40)
     # λ=2.3
-    # initial_removal_fractions = np.linspace(1 - 0.78625, 1 - 0.55, 50)
+    initial_removal_fractions = np.linspace(1 - 0.78625, 1 - 0.65, 50)
     # λ=2.7
-    initial_removal_fractions = np.linspace(1 - 0.75, 1 - 0.645, 50)
+    # initial_removal_fractions = np.linspace(1 - 0.75, 1 - 0.645, 50)
 
     # initial_removal_fractions = list([0.9])
 
@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
     # G_A, G_B, node_mapping = gn.create_rr_graph(N, average_degree)
     # G_A, G_B, node_mapping = gn.create_sf_graph(N, average_degree, 3.0)
-    G_A, G_B, node_mapping = gn.create_sf_graph(N, average_degree, 2.7)
+    G_A, G_B, node_mapping = gn.create_sf_graph(N, average_degree, 2.3)
 
     for initial_removal_fraction in initial_removal_fractions:
 
@@ -86,11 +86,11 @@ if __name__ == "__main__":
             'N': N,
             'average_degree': average_degree,
             'num_experiments': num_experiments,
-            'network_type': 'SF2.7'
+            'network_type': 'SF2.3'
         }
     }
 
-    file_path = os.path.join(save_dir, 'cf_New_SF2.7_N' + str(N) + '_data.json')
+    file_path = os.path.join(save_dir, 'cf_New_SF2.3_N' + str(N) + '_data.json')
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 

@@ -422,12 +422,12 @@ if __name__ == "__main__":
     print("示例1: 生成小规模网络")
     print("="*60)
     
-    generator1 = ImprovedSFNetworkGenerator(N=30000, avg_degree=4, gamma=2.7)
+    generator1 = ImprovedSFNetworkGenerator(N=30000, avg_degree=4, gamma=2.3)
     G1 = generator1.generate(method='custom', max_attempts=3000)
 
     # 保存网络为graphml格式
-    nx.write_graphml(G1, "SFB_27.graphml")
-    print(f"\n✓ 网络已保存为 SFB_27.graphml")
+    nx.write_graphml(G1, "SFA_23.graphml")
+    print(f"\n✓ 网络已保存为 SFA_23.graphml")
 
     print(f"\n最终网络统计:")
     print(f"  节点数: {G1.number_of_nodes()}")
@@ -450,9 +450,9 @@ if __name__ == "__main__":
     
     # 理论曲线
     k_theory = np.logspace(np.log10(k_plot.min()), np.log10(k_plot.max()), 100)
-    C_fit = np.exp(np.mean(np.log(pk_plot) + 2.5 * np.log(k_plot)))
-    pk_theory = C_fit * (k_theory ** -2.5)
-    plt.loglog(k_theory, pk_theory, '--', linewidth=2, label='理论 $k^{-2.7}$', color='red')
+    C_fit = np.exp(np.mean(np.log(pk_plot) + 2.3 * np.log(k_plot)))
+    pk_theory = C_fit * (k_theory ** -2.3)
+    plt.loglog(k_theory, pk_theory, '--', linewidth=2, label='理论 $k^{-2.3}$', color='red')
     
     plt.xlabel('度 k', fontsize=12, fontweight='bold')
     plt.ylabel('概率 P(k)', fontsize=12, fontweight='bold')
