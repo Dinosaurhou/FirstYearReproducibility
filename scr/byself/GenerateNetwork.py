@@ -64,8 +64,8 @@ def create_sf_graph(_N, _average_degree, _gamma):
     # G_A = generatorSF.generate()
     # G_B = generatorSF.generate()
     
-    G_A = NetworkIO.load_graph("F:\\浙师大研究生\\FirstYear-Reproducibility\\FirstYearReproducibility\\scr\\byself\\saved_networks\\SFA_N30000_k4_gamma27.graphml", format='graphml')
-    G_B = NetworkIO.load_graph("F:\\浙师大研究生\\FirstYear-Reproducibility\\FirstYearReproducibility\\scr\\byself\\saved_networks\\SFB_N30000_k4_gamma27.graphml", format='graphml')
+    G_A = NetworkIO.load_graph("./saved_networks/SFA_27.graphml", format='graphml')
+    G_B = NetworkIO.load_graph("./saved_networks/SFB_27.graphml", format='graphml')
 
     # 打印网络A基本信息
     print("=== 网络A ===")

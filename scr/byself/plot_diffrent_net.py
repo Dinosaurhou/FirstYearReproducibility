@@ -80,7 +80,7 @@ if __name__ == "__main__":
         'cf_ER_N30000_data.json',
         'cf_RR_N30000_data.json',
         'cf_SF3_N30000_data.json',
-        'cf_SF2.7_N30000_data.json',
+        'cf_New_SF2.7_N30000_data.json',
         'cf_SF2.3_N30000_data.json',
     ]
 

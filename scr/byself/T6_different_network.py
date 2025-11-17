@@ -20,7 +20,7 @@ if __name__ == "__main__":
     # λ=2.3
     # initial_removal_fractions = np.linspace(1 - 0.78625, 1 - 0.55, 50)
     # λ=2.7
-    initial_removal_fractions = np.linspace(1 - 0.75, 1 - 0.55, 50)
+    initial_removal_fractions = np.linspace(1 - 0.75, 1 - 0.645, 50)
 
     # initial_removal_fractions = list([0.9])
 
@@ -75,7 +75,7 @@ if __name__ == "__main__":
 
     # XXX:保存数据到文件
     # 确保目录存在
-    save_dir = "scr/byself/out"
+    save_dir = "./out"
     os.makedirs(save_dir, exist_ok=True)
 
     # 保存数据为JSON格式
@@ -90,7 +90,7 @@ if __name__ == "__main__":
         }
     }
 
-    file_path = os.path.join(save_dir, 'cf_SF2.7_N' + str(N) + '_data.json')
+    file_path = os.path.join(save_dir, 'cf_New_SF2.7_N' + str(N) + '_data.json')
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 
