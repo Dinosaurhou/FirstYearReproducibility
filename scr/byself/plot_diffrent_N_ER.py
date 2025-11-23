@@ -1,8 +1,9 @@
 import json
 import matplotlib.pyplot as plt
 import os
-import numpy as np
 from scipy.interpolate import make_interp_spline
+from scipy.ndimage import gaussian_filter1d  # 引入高斯滤波
+import numpy as np
 
 def load_data(filename):
     """加载JSON数据文件"""
@@ -23,80 +24,80 @@ def plot_multiple_datasets(datasets):
         print("没有加载任何数据，无法绘图。")
         return
 
-    # 设置中文字体，以防乱码
+    # 设置中文字体
     plt.rcParams['font.sans-serif'] = ['SimHei']
     plt.rcParams['axes.unicode_minus'] = False
 
     plt.figure(figsize=(10, 7))
 
-    # 定义一组标记和线型，用于区分不同的曲线
-    markers = ['o', 's', '^', 'v', '>', '<', 'd']
-    linestyles = ['-', '--', '-.', ':']
-
+    # 定义颜色列表，确保不同N值颜色区分明显
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
+    
     # 遍历每个数据集并绘图
     for i, data in enumerate(datasets):
         if data is None:
             continue
         
-        # 提取数据并转换为numpy数组
+        # 提取数据
         x_attack = np.array(data['initial_removal_fractions'])
         y = np.array(data['p_giants'])
         n = data['parameters']['N']
 
-        # 1. 将攻击比例转换为幸存节点比例
+        # 1. 转换x轴数据
         x_survive = (1 - x_attack) * 4
 
-        # 为了进行正确的插值，需要按x轴对数据进行排序
+        # 排序
         sort_indices = np.argsort(x_survive)
         x_sorted = x_survive[sort_indices]
         y_sorted = y[sort_indices]
 
-        # 2. 对曲线进行平滑处理
-        # 确保有足够的数据点进行三次样条插值 (k=3)
+        # --- 核心修改：两步平滑法 ---
+        
+        # 第一步：高斯滤波 (去除突出的噪点)
+        # sigma 控制平滑程度，数值越大越平滑，建议 0.8 - 1.5 之间
+        y_denoised = gaussian_filter1d(y_sorted, sigma=1.0)
+
+        # 第二步：B-样条插值 (增加点数，使曲线圆滑)
         if len(x_sorted) > 3:
-            # 创建一个更密集的x轴用于绘制平滑曲线
+            # 生成密集的x轴
             x_smooth = np.linspace(x_sorted.min(), x_sorted.max(), 300)
-            # 创建样条插值函数
-            spl = make_interp_spline(x_sorted, y_sorted, k=3)
+            
+            # 使用去噪后的数据进行插值
+            # k=3 (三次样条), bc_type='natural' (自然边界条件，防止端点飞出)
+            spl = make_interp_spline(x_sorted, y_denoised, k=3)
             y_smooth = spl(x_smooth)
             
-            # 绘制平滑曲线和原始数据点
-            line_style = linestyles[i % len(linestyles)]
-            marker_style = markers[i % len(markers)]
+            # 限制y值范围在[0, 1]之间（物理意义约束）
+            y_smooth = np.clip(y_smooth, 0, 1)
             
-            # 绘制平滑曲线（不带标记）
+            # 绘图
+            color = colors[i % len(colors)]
             plt.plot(x_smooth, y_smooth, 
-                     linestyle=line_style, 
+                     linestyle='-', 
+                     linewidth=2.5, 
+                     color=color,
                      label=f'N = {n}')
-            # 在原始数据点位置绘制标记（不带连线）
-            plt.plot(x_sorted, y_sorted, 
-                     marker=marker_style, 
-                     linestyle='none',
-                     color=plt.gca().lines[-1].get_color()) # 确保标记和曲线颜色一致
+            
+            # 可选：绘制原始点（半透明），用于对比
+            # plt.scatter(x_sorted, y_sorted, color=color, alpha=0.3, s=20)
+            
         else:
-            # 如果数据点太少，直接绘制原始折线图
-            plt.plot(x_sorted, y_sorted, 
-                     marker=markers[i % len(markers)], 
-                     linestyle=linestyles[i % len(linestyles)], 
-                     label=f'N = {n}')
+            # 数据点太少时的回退方案
+            plt.plot(x_sorted, y_sorted, label=f'N = {n}')
 
-    # 添加一条垂直于x轴的线，表示理论临界点
+    # 添加理论临界线
     critical_point = 2.4554
-    plt.axvline(x=critical_point, color='r', linestyle='--', linewidth=2)
-    
-    # 在垂直线旁边添加标注
-    # y_pos可以根据图表的美观程度进行调整，这里选择0.5作为中间位置
-    plt.text(critical_point, 0.5, f'<k>*{critical_point}', color='r', fontsize=12)
+    plt.axvline(x=critical_point, color='gray', linestyle='--', linewidth=1.5, alpha=0.8)
+    plt.text(critical_point + 0.01, 0.5, f'理论临界点\n{critical_point}', color='gray', fontsize=10)
 
     # 设置图表属性
-    plt.title('不同网络规模下巨片存在概率与幸存节点比例的关系', fontsize=16)
-    plt.xlabel('幸存节点比例 (1-p)', fontsize=12)
+    plt.title('不同网络规模下巨片存在概率与平均度的关系', fontsize=16)
+    plt.xlabel('平均度 <k>', fontsize=12)
     plt.ylabel('巨片存在概率 (P_giant)', fontsize=12)
-    plt.grid(True, linestyle='--', alpha=0.6)
-    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.4)
+    plt.legend(fontsize=10)
     plt.tight_layout()
 
-    # 显示图表
     plt.show()
 
 if __name__ == "__main__":
