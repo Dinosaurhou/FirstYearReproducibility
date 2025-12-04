@@ -99,7 +99,7 @@ plt.scatter(pts, pts, s=10)
 
 plt.xlabel('x')
 plt.ylabel('y')
-plt.title('Reproduction of SI Fig.2: y = pgA[pgB(x)] and y=x (SF λ=3)')
+plt.title('y = p*gA[p*gB(x)]')
 plt.xlim(0,1)
 plt.ylim(0,1)
 plt.legend()
