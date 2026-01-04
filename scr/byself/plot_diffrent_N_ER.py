@@ -96,6 +96,33 @@ def plot_multiple_datasets(datasets):
     plt.ylabel('巨片存在概率 (P_giant)', fontsize=12)
     plt.grid(True, linestyle='--', alpha=0.4)
     plt.legend(fontsize=10)
+
+    # --- 修改开始：强制坐标轴从左下角开始 ---
+    # 1. 获取当前数据的 x 轴最小值（或者你可以手动指定为 0 或 2.3 等）
+    # 这里假设你想从 x 的最小值开始，或者从 2.3 开始（根据你的数据范围）
+    # 如果你想从 0 开始，就写 plt.xlim(left=0)
+    # 根据你的数据，x 轴大约在 2.3 到 2.5 之间，建议根据数据自动调整或手动设定
+    
+    # 示例：强制 Y 轴从 0 开始
+    plt.ylim(bottom=0, top=1.05) 
+
+    # 示例：强制 X 轴从数据范围的左边界开始 (或者你可以写 left=2.3)
+    # 为了紧贴左下角，我们需要知道 x 的最小值。
+    # 我们可以遍历所有数据找到最小的 x_smooth
+    min_x = 100
+    max_x = 0
+    for data in datasets:
+        if data:
+            x_survive = (1 - np.array(data['initial_removal_fractions'])) * 4
+            min_x = min(min_x, x_survive.min())
+            max_x = max(max_x, x_survive.max())
+            
+    plt.xlim(left=min_x, right=max_x)
+
+    # 2. 消除坐标轴与数据之间的留白
+    plt.margins(x=0, y=0)
+    # --- 修改结束 ---
+
     plt.tight_layout()
 
     plt.show()
